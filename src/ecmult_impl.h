@@ -13,6 +13,9 @@
 #include "group.h"
 #include "scalar.h"
 #include "ecmult.h"
+#ifdef USE_ECMULT_STATIC_PRECOMPUTATION
+#include "ecmult_static_pre_context.h"
+#endif
 
 #if defined(EXHAUSTIVE_TEST_ORDER)
 /* We need to lower these values for exhaustive tests because
@@ -302,12 +305,15 @@ static void secp256k1_ecmult_context_init(secp256k1_ecmult_context *ctx) {
 }
 
 static void secp256k1_ecmult_context_build(secp256k1_ecmult_context *ctx, const secp256k1_callback *cb) {
+#ifndef USE_ECMULT_STATIC_PRECOMPUTATION
     secp256k1_gej gj;
+#endif
 
     if (ctx->pre_g != NULL) {
         return;
     }
 
+#ifndef USE_ECMULT_STATIC_PRECOMPUTATION
     /* get the generator */
     secp256k1_gej_set_ge(&gj, &secp256k1_ge_const_g);
 
@@ -315,9 +321,14 @@ static void secp256k1_ecmult_context_build(secp256k1_ecmult_context *ctx, const 
 
     /* precompute the tables with odd multiples */
     secp256k1_ecmult_odd_multiples_table_storage_var(ECMULT_TABLE_SIZE(WINDOW_G), *ctx->pre_g, &gj);
+#else
+    (void)cb;
+    ctx->pre_g = (secp256k1_ge_storage (*)[]) &secp256k1_ecmult_static_pre_context;
+#endif
 
 #ifdef USE_ENDOMORPHISM
     {
+#ifndef USE_ECMULT_STATIC_PRECOMPUTATION
         secp256k1_gej g_128j;
         int i;
 
@@ -329,6 +340,10 @@ static void secp256k1_ecmult_context_build(secp256k1_ecmult_context *ctx, const 
             secp256k1_gej_double_var(&g_128j, &g_128j, NULL);
         }
         secp256k1_ecmult_odd_multiples_table_storage_var(ECMULT_TABLE_SIZE(WINDOW_G), *ctx->pre_g_128, &g_128j);
+#else
+        (void)cb;
+        ctx->pre_g_128 = (secp256k1_ge_storage (*)[]) &secp256k1_ecmult_static_pre128_context;
+#endif
     }
 #endif
 }
@@ -358,9 +373,11 @@ static int secp256k1_ecmult_context_is_built(const secp256k1_ecmult_context *ctx
 }
 
 static void secp256k1_ecmult_context_clear(secp256k1_ecmult_context *ctx) {
+#ifndef USE_ECMULT_STATIC_PRECOMPUTATION
     free(ctx->pre_g);
 #ifdef USE_ENDOMORPHISM
     free(ctx->pre_g_128);
+#endif
 #endif
     secp256k1_ecmult_context_init(ctx);
 }
