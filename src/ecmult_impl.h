@@ -14,6 +14,9 @@
 #include "group.h"
 #include "scalar.h"
 #include "ecmult.h"
+#ifdef USE_ECMULT_STATIC_PRECOMPUTATION
+#include "ecmult_static_pre_context.h"
+#endif
 
 #if defined(EXHAUSTIVE_TEST_ORDER)
 /* We need to lower these values for exhaustive tests because
@@ -311,12 +314,16 @@ static void secp256k1_ecmult_odd_multiples_table_storage_var(const int n, secp25
     } \
 } while(0)
 
+#ifndef USE_ECMULT_STATIC_PRECOMPUTATION
 static const size_t SECP256K1_ECMULT_CONTEXT_PREALLOCATED_SIZE =
     ROUND_TO_ALIGN(sizeof((*((secp256k1_ecmult_context*) NULL)->pre_g)[0]) * ECMULT_TABLE_SIZE(WINDOW_G))
 #ifdef USE_ENDOMORPHISM
     + ROUND_TO_ALIGN(sizeof((*((secp256k1_ecmult_context*) NULL)->pre_g_128)[0]) * ECMULT_TABLE_SIZE(WINDOW_G))
 #endif
     ;
+#else
+static const size_t SECP256K1_ECMULT_CONTEXT_PREALLOCATED_SIZE = 0;
+#endif
 
 static void secp256k1_ecmult_context_init(secp256k1_ecmult_context *ctx) {
     ctx->pre_g = NULL;
@@ -326,14 +333,17 @@ static void secp256k1_ecmult_context_init(secp256k1_ecmult_context *ctx) {
 }
 
 static void secp256k1_ecmult_context_build(secp256k1_ecmult_context *ctx, void **prealloc) {
+#ifndef USE_ECMULT_STATIC_PRECOMPUTATION
     secp256k1_gej gj;
     void* const base = *prealloc;
     size_t const prealloc_size = SECP256K1_ECMULT_CONTEXT_PREALLOCATED_SIZE;
+#endif
 
     if (ctx->pre_g != NULL) {
         return;
     }
 
+#ifndef USE_ECMULT_STATIC_PRECOMPUTATION
     /* get the generator */
     secp256k1_gej_set_ge(&gj, &secp256k1_ge_const_g);
 
@@ -346,9 +356,14 @@ static void secp256k1_ecmult_context_build(secp256k1_ecmult_context *ctx, void *
 
     /* precompute the tables with odd multiples */
     secp256k1_ecmult_odd_multiples_table_storage_var(ECMULT_TABLE_SIZE(WINDOW_G), *ctx->pre_g, &gj);
+#else
+    (void)prealloc;
+    ctx->pre_g = (secp256k1_ge_storage (*)[]) &secp256k1_ecmult_static_pre_context;
+#endif
 
 #ifdef USE_ENDOMORPHISM
     {
+#ifndef USE_ECMULT_STATIC_PRECOMPUTATION
         secp256k1_gej g_128j;
         int i;
 
@@ -363,6 +378,10 @@ static void secp256k1_ecmult_context_build(secp256k1_ecmult_context *ctx, void *
             secp256k1_gej_double_var(&g_128j, &g_128j, NULL);
         }
         secp256k1_ecmult_odd_multiples_table_storage_var(ECMULT_TABLE_SIZE(WINDOW_G), *ctx->pre_g_128, &g_128j);
+#else
+        (void)prealloc;
+        ctx->pre_g_128 = (secp256k1_ge_storage (*)[]) &secp256k1_ecmult_static_pre128_context;
+#endif
     }
 #endif
 }

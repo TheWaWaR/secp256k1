@@ -155,24 +155,34 @@ CPPFLAGS_FOR_BUILD +=-I$(top_srcdir)
 
 gen_context_OBJECTS = gen_context.o
 gen_context_BIN = gen_context$(BUILD_EXEEXT)
-gen_%.o: src/gen_%.c
-	$(CC_FOR_BUILD) $(CPPFLAGS_FOR_BUILD) $(CFLAGS_FOR_BUILD) -c $< -o $@
 
 $(gen_context_BIN): $(gen_context_OBJECTS)
 	$(CC_FOR_BUILD) $(CFLAGS_FOR_BUILD) $(LDFLAGS_FOR_BUILD) $^ -o $@
 
-$(libsecp256k1_la_OBJECTS): src/ecmult_static_context.h
-$(tests_OBJECTS): src/ecmult_static_context.h
-$(bench_internal_OBJECTS): src/ecmult_static_context.h
-$(bench_ecmult_OBJECTS): src/ecmult_static_context.h
+gen_pre_context_OBJECTS = gen_pre_context.o
+gen_pre_context_BIN = gen_pre_context$(BUILD_EXEEXT)
+
+$(gen_pre_context_BIN): $(gen_pre_context_OBJECTS)
+	$(CC_FOR_BUILD) $(CFLAGS_FOR_BUILD) $(LDFLAGS_FOR_BUILD) $^ -o $@
+
+gen_%.o: src/gen_%.c
+	$(CC_FOR_BUILD) $(CPPFLAGS_FOR_BUILD) $(CFLAGS_FOR_BUILD) -c $< -o $@
+
+$(libsecp256k1_la_OBJECTS): src/ecmult_static_context.h src/ecmult_static_pre_context.h
+$(tests_OBJECTS): src/ecmult_static_context.h src/ecmult_static_pre_context.h
+$(bench_internal_OBJECTS): src/ecmult_static_context.h src/ecmult_static_pre_context.h
+$(bench_ecmult_OBJECTS): src/ecmult_static_context.h src/ecmult_static_pre_context.h
 
 src/ecmult_static_context.h: $(gen_context_BIN)
 	./$(gen_context_BIN)
 
-CLEANFILES = $(gen_context_BIN) src/ecmult_static_context.h $(JAVAROOT)/$(JAVAORG)/*.class .stamp-java
+src/ecmult_static_pre_context.h: $(gen_pre_context_BIN)
+	./$(gen_pre_context_BIN)
+
+CLEANFILES = $(gen_context_BIN) $(gen_pre_context_BIN) src/ecmult_static_context.h src/ecmult_static_pre_context.h $(JAVAROOT)/$(JAVAORG)/*.class .stamp-java
 endif
 
-EXTRA_DIST = autogen.sh src/gen_context.c src/basic-config.h $(JAVA_FILES)
+EXTRA_DIST = autogen.sh src/gen_context.c src/gen_pre_context.c src/basic-config.h $(JAVA_FILES)
 
 if ENABLE_MODULE_ECDH
 include src/modules/ecdh/Makefile.am.include
