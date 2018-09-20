@@ -15,6 +15,20 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifdef CUSTOM_ABORT
+extern void custom_abort();
+#define ABORT custom_abort
+#else
+#define ABORT abort
+#endif
+
+#ifdef CUSTOM_PRINT_ERR
+extern int custom_print_err(const char *, ...);
+#define PRINT_ERR(...) custom_print_err(__VA_ARGS__)
+#else
+#define PRINT_ERR(...) fprintf(stderr, __VA_ARGS__)
+#endif
+
 typedef struct {
     void (*fn)(const char *text, void* data);
     const void* data;
@@ -26,13 +40,13 @@ static SECP256K1_INLINE void secp256k1_callback_call(const secp256k1_callback * 
 
 #ifdef DETERMINISTIC
 #define TEST_FAILURE(msg) do { \
-    fprintf(stderr, "%s\n", msg); \
-    abort(); \
+    PRINT_ERR("%s\n", msg); \
+    ABORT(); \
 } while(0);
 #else
 #define TEST_FAILURE(msg) do { \
-    fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, msg); \
-    abort(); \
+    PRINT_ERR("%s:%d: %s\n", __FILE__, __LINE__, msg); \
+    ABORT(); \
 } while(0)
 #endif
 
