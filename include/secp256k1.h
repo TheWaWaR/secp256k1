@@ -190,6 +190,20 @@ SECP256K1_API secp256k1_context* secp256k1_context_create(
     unsigned int flags
 ) SECP256K1_WARN_UNUSED_RESULT;
 
+/** Initialize a secp256k1 context object.
+ *
+ *  Returns: 1 if initialization succeeds.
+ *           0 if initialization fails (could be invalid falgs)
+ *  In:      flags: which parts of the context to initialize.
+ *  In/Out:  ctx:   context to initialize.
+ *
+ *  See also secp256k1_context_randomize.
+ */
+SECP256K1_API int secp256k1_context_initialize(
+    secp256k1_context* ctx,
+    unsigned int flags
+) SECP256K1_WARN_UNUSED_RESULT;
+
 /** Copies a secp256k1 context object.
  *
  *  Returns: a newly created context object.
@@ -205,6 +219,16 @@ SECP256K1_API secp256k1_context* secp256k1_context_clone(
  *  Args:   ctx: an existing context to destroy (cannot be NULL)
  */
 SECP256K1_API void secp256k1_context_destroy(
+    secp256k1_context* ctx
+);
+
+/** Deinitializes a secp256k1 context object.
+ *
+ *  Clears the content of context, but do not destroy the pointer. This should
+ *  be used together with secp256k1_context_initialize
+ *  Args:   ctx: an existing context to destroy (cannot be NULL)
+ */
+SECP256K1_API void secp256k1_context_deinitialize(
     secp256k1_context* ctx
 );
 
