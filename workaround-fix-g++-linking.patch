@@ -1,0 +1,35 @@
+diff --git a/src/ecmult_gen_impl.h b/src/ecmult_gen_impl.h
+index 0e2eafa..c06d250 100644
+--- a/src/ecmult_gen_impl.h
++++ b/src/ecmult_gen_impl.h
+@@ -96,7 +96,7 @@ static void secp256k1_ecmult_gen_context_build(secp256k1_ecmult_gen_context *ctx
+     }
+ #else
+     (void)prealloc;
+-    ctx->prec = (secp256k1_ge_storage (*)[64][16])secp256k1_ecmult_static_context;
++    /* ctx->prec = (secp256k1_ge_storage (*)[64][16])secp256k1_ecmult_static_context; */
+ #endif
+     secp256k1_ecmult_gen_blind(ctx, NULL);
+ }
+diff --git a/src/ecmult_impl.h b/src/ecmult_impl.h
+index 068c89d..1b20405 100644
+--- a/src/ecmult_impl.h
++++ b/src/ecmult_impl.h
+@@ -358,7 +358,7 @@ static void secp256k1_ecmult_context_build(secp256k1_ecmult_context *ctx, void *
+     secp256k1_ecmult_odd_multiples_table_storage_var(ECMULT_TABLE_SIZE(WINDOW_G), *ctx->pre_g, &gj);
+ #else
+     (void)prealloc;
+-    ctx->pre_g = (secp256k1_ge_storage (*)[]) &secp256k1_ecmult_static_pre_context;
++    /* ctx->pre_g = (secp256k1_ge_storage (*)[]) &secp256k1_ecmult_static_pre_context; */
+ #endif
+ 
+ #ifdef USE_ENDOMORPHISM
+@@ -380,7 +380,7 @@ static void secp256k1_ecmult_context_build(secp256k1_ecmult_context *ctx, void *
+         secp256k1_ecmult_odd_multiples_table_storage_var(ECMULT_TABLE_SIZE(WINDOW_G), *ctx->pre_g_128, &g_128j);
+ #else
+         (void)prealloc;
+-        ctx->pre_g_128 = (secp256k1_ge_storage (*)[]) &secp256k1_ecmult_static_pre128_context;
++        /* ctx->pre_g_128 = (secp256k1_ge_storage (*)[]) &secp256k1_ecmult_static_pre128_context; */
+ #endif
+     }
+ #endif
